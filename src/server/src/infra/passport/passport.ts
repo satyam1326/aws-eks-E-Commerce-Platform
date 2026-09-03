@@ -11,8 +11,14 @@ import {
 
 export default function configurePassport() {
   // Google Strategy (unchanged)
-  passport.use(
-    new GoogleStrategy(
+    // Google Strategy
+  if (
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL_DEV
+  ) {
+    passport.use(
+      new GoogleStrategy(
       {
         clientID: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -69,10 +75,17 @@ export default function configurePassport() {
       }
     )
   );
+}
 
   // Facebook Strategy (unchanged, assuming it works)
-  passport.use(
-    new FacebookStrategy(
+    // Facebook Strategy
+  if (
+    process.env.FACEBOOK_APP_ID &&
+    process.env.FACEBOOK_APP_SECRET &&
+    process.env.FACEBOOK_CALLBACK_URL_DEV
+  ) {
+    passport.use(
+      new FacebookStrategy(
       {
         clientID: process.env.FACEBOOK_APP_ID!,
         clientSecret: process.env.FACEBOOK_APP_SECRET!,
@@ -131,10 +144,17 @@ export default function configurePassport() {
       }
     )
   );
+}
 
   // Twitter Strategy (standalone, without oauthUtils)
-  passport.use(
-    new TwitterStrategy(
+    // Twitter Strategy
+  if (
+    process.env.TWITTER_CONSUMER_KEY &&
+    process.env.TWITTER_CONSUMER_SECRET &&
+    process.env.TWITTER_CALLBACK_URL_DEV
+  ) {
+    passport.use(
+      new TwitterStrategy(
       {
         consumerKey: process.env.TWITTER_CONSUMER_KEY!,
         consumerSecret: process.env.TWITTER_CONSUMER_SECRET!,
@@ -209,4 +229,5 @@ export default function configurePassport() {
       }
     )
   );
+}
 }
