@@ -14,11 +14,7 @@ stages {
                 def scannerHome = tool 'sonar-scanner'
 
                 withSonarQubeEnv('SonarQube') {
-                    sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=aws-ecommerce-platform \
-                            -Dsonar.projectName="AWS E-Commerce Platform"
-                    """
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=aws-ecommerce-platform -Dsonar.projectName='AWS E-Commerce Platform'"
                 }
             }
         }
@@ -74,4 +70,6 @@ stages {
             '''
         }
     }
+}
+
 }
