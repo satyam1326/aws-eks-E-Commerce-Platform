@@ -26,6 +26,8 @@ stages {
                 def dependencyCheckHome = tool 'dependency-check'
 
                 sh """
+                    mkdir -p dependency-check-report
+
                     ${dependencyCheckHome}/bin/dependency-check.sh \
                         --project "AWS E-Commerce Platform" \
                         --scan ./src \
