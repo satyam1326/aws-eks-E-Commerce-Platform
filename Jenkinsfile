@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent any
 
@@ -7,6 +8,18 @@ pipeline {
     }
 
     stages {
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                        sonar-scanner \
+                            -Dsonar.projectKey=aws-ecommerce-platform \
+                            -Dsonar.projectName="AWS E-Commerce Platform"
+                    '''
+                }
+            }
+        }
 
         stage('Build Backend Image') {
             steps {
@@ -50,6 +63,7 @@ pipeline {
                 '''
             }
         }
+
         stage('Cleanup Docker Images') {
             steps {
                 sh '''
@@ -59,3 +73,4 @@ pipeline {
         }
     }
 }
+```
