@@ -20,6 +20,30 @@ stages {
         }
     }
 
+    stage('OWASP Dependency-Check') {
+        steps {
+            script {
+                def dependencyCheckHome = tool 'dependency-check'
+
+                sh """
+                    ${dependencyCheckHome}/bin/dependency-check.sh \
+                        --project "AWS E-Commerce Platform" \
+                        --scan ./src \
+                        --format HTML \
+                        --format JSON \
+                        --out dependency-check-report \
+                        --failOnCVSS 7
+                """
+            }
+        }
+
+        post {
+            always {
+                archiveArtifacts artifacts: 'dependency-check-report/*', allowEmptyArchive: true
+            }
+        }
+    }
+
     stage('Build Backend Image') {
         steps {
             sh '''
