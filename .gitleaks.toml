@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+    '''(^|/)dependency-check-report/''',
+    '''(^|/)dist/''',
+    '''(^|/)\.next/''',
+    '''(^|/).*\.log$'''
+]

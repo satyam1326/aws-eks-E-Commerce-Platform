@@ -20,6 +20,22 @@ stages {
         }
     }
 
+    stage('Gitleaks Secrets Scan') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Running Gitleaks Secrets Scan"
+                echo "========================================"
+
+                gitleaks dir \
+                    . \
+                    --config .gitleaks.toml \
+                    --no-banner \
+                    --exit-code 0
+            '''
+        }
+    }
+
     stage('Build Backend Image') {
         steps {
             sh '''
