@@ -20,40 +20,6 @@ stages {
         }
     }
 
-    stage('OWASP Dependency-Check') {
-        steps {
-            script {
-                def dependencyCheckHome = tool 'dependency-check'
-
-                withCredentials([
-                    string(
-                        credentialsId: 'nvd-api-key',
-                        variable: 'NVD_API_KEY'
-                    )
-                ]) {
-                    sh """
-                        mkdir -p dependency-check-report
-
-                        ${dependencyCheckHome}/bin/dependency-check.sh \
-                            --project "AWS E-Commerce Platform" \
-                            --scan ./src \
-                            --format HTML \
-                            --format JSON \
-                            --out dependency-check-report \
-                            --nvdApiKey "\${NVD_API_KEY}" \
-                            --failOnCVSS 7
-                    """
-                }
-            }
-        }
-
-        post {
-            always {
-                archiveArtifacts artifacts: 'dependency-check-report/*', allowEmptyArchive: true
-            }
-        }
-    }
-
     stage('Build Backend Image') {
         steps {
             sh '''
@@ -70,6 +36,30 @@ stages {
                 docker build \
                     -t ecommerce-frontend:${BUILD_NUMBER} \
                     ./src/client
+            '''
+        }
+    }
+
+    stage('Trivy Image Scan') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Scanning Backend Docker Image"
+                echo "========================================"
+
+                trivy image \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 0 \
+                    ecommerce-backend:${BUILD_NUMBER}
+
+                echo "========================================"
+                echo "Scanning Frontend Docker Image"
+                echo "========================================"
+
+                trivy image \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 0 \
+                    ecommerce-frontend:${BUILD_NUMBER}
             '''
         }
     }
