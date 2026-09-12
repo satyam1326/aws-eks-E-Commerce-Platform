@@ -93,6 +93,16 @@ stages {
             '''
         }
     }
+    stage('ECR Login') {
+        steps {
+            sh '''
+                aws ecr get-login-password --region ${AWS_REGION} | \
+                docker login \
+                    --username AWS \
+                    --password-stdin ${ECR_REPOSITORY}
+            '''
+        }
+    }
 
     stage('Push Images to ECR') {
         steps {
