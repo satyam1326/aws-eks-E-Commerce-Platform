@@ -113,6 +113,101 @@ stages {
         }
     }
 
+    stage('Configure EKS Access') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Configuring kubectl for EKS"
+                echo "========================================"
+
+                aws eks update-kubeconfig \
+                    --region ${AWS_REGION} \
+                    --name dev-eks
+
+                kubectl get nodes
+            '''
+        }
+    }
+
+    stage('Run Prisma Migrations') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Running Prisma Database Migrations"
+                echo "========================================"
+                kubectl delete pod prisma-migrate --ignore-not-found
+                kubectl run prisma-migrate \
+                    --image=${ECR_REPOSITORY}:backend-${BUILD_NUMBER} \
+                    --restart=Never \
+                    --env-from=secret/backend-secret \
+                    --command \
+                    -- npx prisma migrate deploy
+                kubectl wait \
+                    --for=jsonpath='{.status.phase}'=Succeeded \
+                    pod/prisma-migrate \
+                    --timeout=300s
+                kubectl logs prisma-migrate
+                kubectl delete pod prisma-migrate --ignore-not-found
+            '''
+        }
+    }
+
+    stage('Deploy Application to EKS') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Deploying Application to EKS"
+                echo "========================================"
+
+                kubectl apply -f kubernetes/backend/deployment.yaml
+                kubectl apply -f kubernetes/backend/service.yaml
+
+                kubectl apply -f kubernetes/frontend/frontend.yaml
+
+                kubectl apply -f kubernetes/ingress/alb-ingress.yaml
+            '''
+        }
+    }
+
+    stage('Update EKS Images') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Updating Application Images"
+                echo "========================================"
+
+                kubectl set image deployment/backend \
+                backend=${ECR_REPOSITORY}:backend-${BUILD_NUMBER}
+
+                kubectl set image deployment/frontend \
+                frontend=${ECR_REPOSITORY}:frontend-${BUILD_NUMBER}
+            '''
+        }
+    }
+
+    stage('Verify EKS Rollout') {
+        steps {
+            sh '''
+                echo "========================================"
+                echo "Verifying Kubernetes Rollout"
+                echo "========================================"
+
+                kubectl rollout status deployment/backend \
+                    --timeout=300s
+
+                kubectl rollout status deployment/frontend \
+                    --timeout=300s
+
+                echo "========================================"
+                echo "Current Application Pods"
+                echo "========================================"
+
+                kubectl get pods -o wide
+            '''
+        }
+    }
+
+
     stage('Cleanup Docker Images') {
         steps {
             sh '''
