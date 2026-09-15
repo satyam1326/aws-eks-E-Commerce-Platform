@@ -135,19 +135,41 @@ stages {
                 echo "========================================"
                 echo "Running Prisma Database Migrations"
                 echo "========================================"
+
                 kubectl delete pod prisma-migrate --ignore-not-found
-                kubectl run prisma-migrate \
-                    --image=${ECR_REPOSITORY}:backend-${BUILD_NUMBER} \
-                    --restart=Never \
-                    --env-from=secret/backend-secret \
-                    --command \
-                    -- npx prisma migrate deploy
+
+                cat <<EOF > prisma-migrate.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prisma-migrate
+spec:
+  restartPolicy: Never
+  containers:
+    - name: prisma-migrate
+      image: ${ECR_REPOSITORY}:backend-${BUILD_NUMBER}
+      command:
+        - npx
+        - prisma
+        - migrate
+        - deploy
+      envFrom:
+        - secretRef:
+            name: backend-secret
+EOF
+
+                kubectl apply -f prisma-migrate.yaml
+
                 kubectl wait \
                     --for=jsonpath='{.status.phase}'=Succeeded \
                     pod/prisma-migrate \
                     --timeout=300s
+
                 kubectl logs prisma-migrate
+
                 kubectl delete pod prisma-migrate --ignore-not-found
+
+                rm -f prisma-migrate.yaml
             '''
         }
     }
